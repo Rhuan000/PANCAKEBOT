@@ -9,7 +9,7 @@ This bot was my first time Building a project with programming, try to interact 
 
 ## Getting-started
 
-- Change the "BSC_API" variable of this File: [address.py](./python_documents/address.py)<p>
+- Change the "BSC_API" variable of this File: [address.py](./bot/python_files/modules/address.py)<p>
     You need to parse your own API key at variable "BSC_API", as a String.<p>
     If you dont have a BSC API Key, please get at bscan oficial site:  [https://bscscan.com/apis](https://bscscan.com/apis) 
 
@@ -56,12 +56,12 @@ This bot was my first time Building a project with programming, try to interact 
 
   ### Buttons:
     - #### ≅
-      If you hit the "≅" button, will convert the amount of BNB for token you want to buy (using live price), and will update the "PRICE/EA" entry.
+      Clicking the "≅" button, will convert the amount of BNB for token you want to buy (using live price), and will update the "PRICE/EA" entry.
       ![Functionalities wallets](./readmepictures/ui-05.png)<p>
       
     - #### Automatic
-      Will buy Tokens for all wallets connecteds if a event called "Mint", be logged in blockchain. (You need to mark the Liquidity box so Bot will start listening for "Mint" event of our target token.)
-      This option is used to sniper a token, its like a auto-buy.<br>
+      This option will buy tokens for all connected wallets if an event called "Mint" is logged in the blockchain. (You need to mark the Liquidity box so the bot will start listening for the "Mint" event of our target token.)
+      This option is used to snipe a token; it's like an auto-buy.<br>
       Entries required: "BNB", "PROFIT"
 
     - #### Buy
