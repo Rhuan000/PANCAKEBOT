@@ -1,8 +1,8 @@
 import tkinter, threading
 from tkinter import messagebox, ttk
-from modules.token_interaction import GetInteraction
-from modules.trade import Trade
-from modules.liquidity import Monitoring
+from bot.python_files.modules.token_interaction import GetInteraction
+from bot.python_files.modules.trade import Trade
+from bot.python_files.modules.liquidity import Monitoring
 import datetime as dt
 
 class GUI():
@@ -15,7 +15,7 @@ class GUI():
         self.wallets = []
         self.bnb_in_account = []
         self.token_in_account = []
-        self.trade = []
+        self.trade:[Trade] = []
         self.interaction = []
         self.liquidity = []
         #self.taxmonitor = []
@@ -52,7 +52,17 @@ class GUI():
 
         # canvas
         self.canvas = tkinter.Canvas(width=161, height=169)
-        self.logo_img = tkinter.PhotoImage(file='../pancakecanvas.png')
+        # Get the directory of the current script
+        import sys, os
+        if getattr(sys, 'frozen', False):
+            application_path = os.path.dirname(sys.executable)
+        elif __file__:
+            application_path = os.path.dirname(__file__)
+
+
+        image_path = os.path.join(application_path, '../pancakecanvas.png')
+
+        self.logo_img = tkinter.PhotoImage(file=image_path)
         self.canvas.create_image(80.5, 84.5, image=self.logo_img)
         self.canvas.grid(column=1, row=1, padx=10, pady=10)
 
@@ -296,7 +306,10 @@ class GUI():
     def immd(self, e):
         '''Function to make the wallets box interactive'''
         indice = self.listbox_ListboxListbox.curselection()
-        self.wallet_index = int(indice[0])
+        try:
+            self.wallet_index = int(indice[0])
+        except:
+            pass
         #Auxiliars function.
         self.openNewWindow(self.wallet_index)
         self.showupwallet(self.wallet_index)
@@ -396,10 +409,13 @@ class GUI():
 
         self.listbox_ListboxListbox.config(state='normal')
         self.wc_ListboxLabel.config(text=f'Connected {len(self.trade)}')
+        
+        for wallet in range(0,len(self.wallets)):
+            self.bnb_in_account.append(0)
+            self.token_in_account.append(0)
 
         #putting all the Bnb balances and tokens in a tuple.
-        for wallet in range(0,len(self.wallets)):
-            self.updateButtonTrigged(wallet)
+        self.updateButtonTrigged()
 
         #making sure the highest wallet to show up on the initial window.
         for wallet in range(0,len(self.wallets)):
@@ -409,17 +425,21 @@ class GUI():
                 self.state = True
         return self.state
 
-    def updateButtonTrigged(self, wallet=0):
+    def updateButtonTrigged(self):
         if self.wallet_index != 0:
             wallet = self.wallet_index
+        print("Caulculando novo saldo")
         '''Will update the balance and show in window after "Update button be clciked" '''
-        balance = self.interaction[wallet].get_balance()
-        bnb = balance[0]
-        token = balance[1]
-        formatedBNB = f"{bnb:.4f}"
-        formatedToken = f"{token:.4f}"
-        self.bnb_in_account.append(float(formatedBNB))
-        self.token_in_account.append(float(formatedToken))
+        for wallet in range(0, len(self.wallets)):
+            balance = self.interaction[wallet].get_balance()
+            bnb = balance[0]
+            token = balance[1]
+            formatedBNB = f"{bnb:.4f}"
+            formatedToken = f"{token:.4f}"
+            self.bnb_in_account[wallet] = (float(formatedBNB))
+            self.token_in_account[wallet] = float(formatedToken)
+            self.showupwallet(wallet)
+        print(wallet)
 
 
     def showupwallet(self, wallet):
@@ -527,7 +547,6 @@ class GUI():
             threading.Thread(target=self.mode_automatic).start()
     def mode_automatic(self, wallet=0):
             '''Able to Buy finnaly, after we select Liquidity option and'''
-            print(wallet)
             maxbuy_entry = self.mbamount_TradeEntry.get()
             bnb_trade_entry = self.bnbtrade_TradeEntry.get()
             profit_entry = self.profit_TradeEntry.get()
@@ -550,20 +569,24 @@ class GUI():
                     self.change_text(f'Listening Transaction for {self.symbol}')
                     self.automatic_running = True
                     self.check_gwei(wallet)
-                    print(self.trade[wallet].gweibuy,self.trade[wallet].gweisell)
+
                     while self.automatic_running:
                         if self.liquidity[wallet].statusreturn == True: #and self.taxmonitor[wallet].buytax < 30:
                             if self.maxbuyvar4.get() == 1 and maxbuy_entry != '':
                                 bnb_tospend = float(maxbuy_entry) * self.interaction[wallet].getTokenPrice()
+                                
                                 if bnb_tospend > old_bnb_tospend:
                                     bnb_tospend = old_bnb_tospend
+
                             self.trade[wallet].buy(bnb_tospend)
                             self.change_text(f'Token was bought\n{self.trade[wallet].buy_contract_address}')
                             print('COMPRADO')
-                            self.window.after(100, self.updateButtonTrigged(0))
+                            self.window.after(100, self.updateButtonTrigged())
+
                             with open('../token_price_at_trade.txt', 'r') as data:
                                 token_price = float(data.read())
                                 final_profit = token_price + ((token_price / 100) * profit)
+
                             while final_profit > self.interaction[0].getTokenPrice():
                                 #Return profit in percentage
                                 keep_profit = ((self.interaction[wallet].getTokenPrice() * 100) / (token_price * 1)) - 100
@@ -572,7 +595,7 @@ class GUI():
 
                                 if float(self.interaction[wallet].getTokenPrice()) > final_profit:
                                     self.trade[wallet].sell(self.token_in_account)
-                                    self.window.after(100, self.updateButtonTrigged(0))
+                                    self.window.after(100, self.updateButtonTrigged())
                                     self.change_text(f"Token was Sold\n{self.trade[wallet].sell_contract_address}")
                                     self.automatic_TradeButton.config(text='automatic', bg='#D9D9D9', activebackground='#ECECEC')
                                     self.automatic_running = False
@@ -585,9 +608,14 @@ class GUI():
 
 
     def catch_buy_button(self):
-        for wallets in range(0, len(self.interaction)):
-            GUI.mode_buy.__defaults__ = (wallets,)
-        threading.Thread(target=self.mode_buy).start()
+        if self.buy_running == False:
+            for wallets in range(0, len(self.interaction)):
+                threading.Thread(target=self.mode_buy, args=(wallets,)).start()
+
+        else:
+            self.buy_running = False
+            self.buy_TradeButton.config(text='Buy', width=7, height=1, bg='#66CDAA', activebackground='#008080')
+        
 
     def mode_buy(self, wallets=0):
         '''WIll only BUY the token address that was connect with the wallet'''
@@ -604,9 +632,7 @@ class GUI():
         except ValueError:
             pass
         finally:
-            #This if is to make sure that the process will stop or running when User wants. will change the button to Cancel.
             #Elif conditional of this if, will change the button to Connected again and break the running.
-            if self.buy_running == False:
                 self.buy_running = True
                 try:
                     bnb_trade_entry = float(bnb_trade_entry)
@@ -618,14 +644,13 @@ class GUI():
                                                  message='Buy mode needs BNB and PRICE/EA entries\n\n(PRICE/EA can be 0 to make the operation with live price)\n\nPlease, check if you enter number and not letter or leave blank space in BNB or PRICE/EA.\n\n(Entries ex.: 0.01 / 0.1 / 1.0 / 1)\n \nVerifique se você preencheu número e não  letra ou deixou espaço em branco em BNB ou PRICE/EA\n\n(PRICE/EA pode ser 0 para fazer a operação com o preço ao vivo)')
                 else:
                     self.buy_TradeButton.config(text='Cancel', bg='#b40d0d', activebackground='#8B0000')
-                    self.check_gwei()
-                    
+                    self.check_gwei(wallets)
                     #Monitoring the Price, If actual price is Lowest than User Buy Price entered, BUY. 
                     while self.buy_running:
-                        if float(self.interaction[0].getTokenPrice()) <= price_entry:
+                        if float(self.interaction[wallets].getTokenPrice()) <= price_entry:
                             self.trade[wallets].buy(bnb_trade_entry)
-                            self.window.after(100, self.updateButtonTrigged(0))
-                            self.change_text(text=f'Token Bought\n{self.trade.buy_contract_address}')
+                            self.window.after(100, self.updateButtonTrigged())
+                            self.change_text(text=f'Token Bought\n{self.trade[wallets].buy_hash}')
 
                             with open('../token_price_at_trade.txt', 'r') as data:
                                 token_price = float(data.read())
@@ -635,64 +660,71 @@ class GUI():
                                 
                                 #Monitoring the Price, If actual price is bigger than User Profit entered, SELL.
                                 while self.buy_running:
-                                    if float(self.interaction[wallet].getTokenPrice()) >= final_profit:
+                                    if float(self.interaction[wallets].getTokenPrice()) >= final_profit:
                                         self.trade[wallets].sell(self.token_in_account)
 
                                         self.change_text(f'FINALIZED\n{self.trade[wallets].sell_contract_address}')
                                         self.automatic_running = False
                                         self.buy_TradeButton.config(text='Buy', width=7, height=1, bg='#66CDAA',
                                                                activebackground='#008080')
-                                        self.window.after(100, self.updateButtonTrigged(0))
+                                       
+                                        self.updateButtonTrigged()
                             else:
                                 self.buy_running = False
-            
-            elif self.buy_running == True:
-                self.buy_running = False
-                self.buy_TradeButton.config(text='Buy', width=7, height=1, bg='#66CDAA',
+                                self.buy_TradeButton.config(text='Buy', width=7, height=1, bg='#66CDAA',
                                          activebackground='#008080')
 
-
+            
     def catch_sell_button(self):
-        for wallets in range(0, len(self.interaction[wallet])):
-            GUI.mode_buy.__defaults__ = (wallets,)
-        threading.Thread(target=self.mode_sell).start()
-    
-    def mode_sell(self, wallet):
-        '''WIll only SELL the token address that was connect with the wallet'''
         if self.sell_running == False:
-            self.sell_running = True
-            price_entry = self.pricetrade_TradeEntry.get()
-            symbol_entry = self.tokentrade_TradeEntry.get()
-
-            if self.allvar1.get() == 1:
-                symbol_entry = self.token_in_account
-            try:
-                if symbol_entry == '0':
-                    symbol_entry = ''
-                symbol_entry = float(symbol_entry)
-                price_entry = float(price_entry)
-            except ValueError:
-                messagebox.showerror(title='Error: Sell Mode',
-                                     message=f'Buy mode needs {self.symbol} and PRICE/EA entries\n\n(PRICE/EA can be 0 to make the operation with live price)  \n\nPlease, check if you enter number and not letter or leave blank space in {self.symbol} or PRICE/EA.\n\n(Entries ex.: 0.01 / 0.1 / 1.0 / 1)\n \nVerifique se você preencheu número e não  letra ou deixou espaço em branco em {self.symbol} ou PRICE/EA\n\n(PRICE/EA pode ser 0 para fazer a operação com o preço ao vivo)')
-            else:
-                self.sell_TradeButton.config(text='Cancel', bg='#b40d0d', activebackground='#8B0000')
-                self.check_gwei()
-                self.change_text(f'Selling {symbol_entry} {self.symbol} for {price_entry * symbol_entry} BNB')
-                
-                #Monitoring the Price, If actual price is bigger than User Profit entered, SELL.
-                while self.sell_running:
-                    if float(self.interaction[wallet].getTokenPrice()) >= price_entry:
-                        self.trade[wallet].sell(symbol_entry)
-                        self.change_text(f'FINALIZED\n{self.trade[wallet].sell_contract_address}')
-                        self.sell_running = False
-                        self.sell_TradeButton.config(text='Sell', width=7, height=1, bg='#F08080',
-                                                activebackground='#8B0000')
-                        self.window.after(100, self.updateButtonTrigged(0))
-        
+            for wallets in range(0, len(self.interaction)):
+                threading.Thread(target=self.mode_sell, args=(wallets,)).start()
         else:
             self.sell_running = False
-            self.sell_TradeButton.config(text='Sell', width=7, height=1, bg='#F08080',
-                                   activebackground='#8B0000')
+            self.sell_TradeButton.config(text='Sell', width=7, height=1, bg='#F08080', activebackground='#8B0000')
+
+    def mode_sell(self, wallet=0):
+        '''WIll only SELL the token address that was connect with the wallet'''
+        self.sell_running = True
+        self.sell_TradeButton.config(text='Cancel', bg='#b40d0d', activebackground='#8B0000')
+
+        price_entry = self.pricetrade_TradeEntry.get()
+        symbol_entry = self.tokentrade_TradeEntry.get()
+        
+        try:
+            if symbol_entry == '0':
+                symbol_entry = ''
+            symbol_entry = float(symbol_entry)
+            price_entry = float(price_entry)
+        except ValueError:
+            messagebox.showerror(title='Error: Sell Mode', message=f'Buy mode needs {self.symbol} and PRICE/EA entries\n\n(PRICE/EA can be 0 to make the operation with live price)  \n\nPlease, check if you enter number and not letter or leave blank space in {self.symbol} or PRICE/EA.\n\n(Entries ex.: 0.01 / 0.1 / 1.0 / 1)\n \nVerifique se você preencheu número e não  letra ou deixou espaço em branco em {self.symbol} ou PRICE/EA\n\n(PRICE/EA pode ser 0 para fazer a operação com o preço ao vivo)')
+        if self.allvar1.get() == 1:
+            symbol_entry = True    
+        else:
+            self.change_text(f'Selling {symbol_entry} {self.symbol} for {price_entry * symbol_entry} BNB')
+        
+        self.check_gwei(wallet)
+        #Monitoring the Price, If actual price is bigger than User Profit entered, SELL.
+        while self.sell_running:
+                if float(self.interaction[wallet].getTokenPrice()) >= price_entry:
+                    if symbol_entry == True:
+                        print(self.token_in_account[wallet])
+                        
+                        print("selling all  amount")
+                        balance = self.interaction[wallet].get_balance()
+                        bnb = balance[0]
+                        token = balance[1]
+                        self.trade[wallet].sell(token)
+                        
+                    else:
+                        self.trade[wallet].sell(symbol_entry)
+
+                    self.change_text(f'FINALIZED\n{self.trade[wallet].sell_hash}')
+                    self.sell_running = False
+                    self.sell_TradeButton.config(text='Sell', width=7, height=1, bg='#F08080',
+                                            activebackground='#8B0000')
+                    self.window.after(100, self.updateButtonTrigged())
+        
 
     #CHECK GWEI FUNCTION
     def check_gwei(self, wallet):

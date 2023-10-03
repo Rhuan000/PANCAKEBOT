@@ -1,8 +1,9 @@
 from web3 import Web3
-from modules.address import Address
+from bot.python_files.modules.address import Address
 
-bsc = "https://bsc-dataseed.binance.org/"
-web3 = Web3(Web3.HTTPProvider(bsc))
+#BSC = "http://127.0.0.1:8545/"
+BSC = "https://bsc-dataseed.binance.org/"
+web3 = Web3(Web3.HTTPProvider(BSC))
 
 class GetInteraction():
     '''the Methods inside this class will return the token Value, Name and the quantity of token (BNB or token you want to buy) that you have. '''
@@ -21,7 +22,7 @@ class GetInteraction():
 
         router = web3.eth.contract(address=self.all_adress.router_address, abi=self.all_adress.router_abi)
         amountOut = router.functions.getAmountsOut(tokensToSell, [self.all_adress.tokenBuy, self.all_adress.WBNB]).call()
-        amountOut = web3.fromWei(amountOut[1], 'ether')
+        amountOut = web3.from_wei(amountOut[1], 'ether')
         self.token_price = float(amountOut)
         return self.token_price
 
@@ -35,11 +36,11 @@ class GetInteraction():
     def get_balance(self):
         #BNB Balance
         balance = web3.eth.get_balance(self.all_adress.my_address)
-        bnb_balance = web3.fromWei(balance, 'ether')
+        bnb_balance = web3.from_wei(balance, 'ether')
 
         #Token To buy Balance
         sellTokenContract = web3.eth.contract(self.all_adress.tokenBuy, abi=self.all_adress.sell_abi)
         balance2 = sellTokenContract.functions.balanceOf(self.all_adress.my_address).call()
-        token_balance = web3.fromWei(balance2, 'ether')
+        token_balance = web3.from_wei(balance2, 'ether')
 
         return bnb_balance, token_balance

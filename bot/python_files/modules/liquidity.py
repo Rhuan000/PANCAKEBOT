@@ -1,10 +1,11 @@
 import asyncio, json
 from datetime import datetime
 
-from modules.address import Address
+from bot.python_files.modules.address import Address
 from web3 import Web3
-from os import getenv
+#from os import getenv
 
+#BSC =  "http://127.0.0.1:8545/"
 BSC = "https://bsc-dataseed.binance.org/"
 WEB3 = Web3(Web3.HTTPProvider(BSC))
 
