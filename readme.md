@@ -1,6 +1,11 @@
 # Python Pancake Bot
 This bot was my first time Building a project with programming, try to interact with blockchain and making a readme. I just built this bot because i wanted swap in pancakeswap, and snipe new tokens.
 
+## Download 
+- [Linux](https://github.com/Rhuan000/PANCAKEBOT/releases/tag/download)
+- [Windows](https://github.com/Rhuan000/PANCAKEBOT/releases/tag/download)
+- Or follow the guide to run with git clone. 
+
 ## Requirements
 - [git](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git)
 - [python 3.10+](https://www.python.org/downloads/)
@@ -8,10 +13,6 @@ This bot was my first time Building a project with programming, try to interact 
 
 
 ## Getting-started
-
-- Change the "BSC_API" variable of this File: [address.py](./bot/python_files/modules/address.py)<p>
-    You need to parse your own API key at variable "BSC_API", as a String.<p>
-    If you dont have a BSC API Key, please get at bscan oficial site:  [https://bscscan.com/apis](https://bscscan.com/apis) 
 
 - Clonning Git:
   ```bash 
@@ -23,8 +24,14 @@ This bot was my first time Building a project with programming, try to interact 
   pip install asyncio web3 datetime os python-dotenv
   ```
 
+
 ##  Running bot<p>
-- Open you terminal, make sure you are inside "python_files" folder and run main.py, you will see an image like this: 
+- Open you terminal, make sure you are inside "PANCAKEBOT" folder and run 
+```bash
+  python3 main.py
+  ``` 
+  you will see an image like this: 
+  
 ![Adding wallets](./readmepictures/ui-01.png)<p>
   Put your private key and wallet address, then click in "add wallet" (you can decide how many wallets do you want.)<p>
 
@@ -44,7 +51,7 @@ This bot was my first time Building a project with programming, try to interact 
   ### Entries:
     - "BNB" entry its the BNB amount you want to trade for token (always check and switch for your wallet).<p>
   
-    - "PROFIT" entry is optional in "[Buy](#buy)" Button, but in  "[Automatic](#automatic)" you need to provide.<p>   
+    - The "PROFIT" entry is optional. If you choose to provide a value for "PROFIT," it should represent a percentage. For example, if you enter "25" in the "PROFIT" field, the bot will sell the token at a 25% profit based on appreciation.<p>   
       
     - "tokenSymbol" its how much<p>
     
@@ -71,3 +78,19 @@ This bot was my first time Building a project with programming, try to interact 
     - #### Sell
        Will sell Tokens for all wallets connecteds when the Token price is higher than provided "PRICE/EA".<br>
        Entries required: "BNB", "PRICE/EA"
+
+  ### MarkBox
+    - #### 100%
+      This option Select All Tokens you have, and works together with [Sell](#Sell). Its used when you want to sell all tokens at once. 
+    
+    - #### PROFIT
+      Will enable  The ["PROFIT"](#"PROFIT") Entry.
+    
+    - #### Maxbuy
+      If the Token has a "Maxbuy", you can parse "Maxbuy" amount of token here to be sure the bot will not fail.
+
+    - #### Liquidity
+      Enables the Liquidity Monitoring to use alied with Automatic mode.
+
+    - #### Keep Tracking
+      Displays the profit or losses as a percentage. If another purchase is made, the percentage may no longer be accurate.
