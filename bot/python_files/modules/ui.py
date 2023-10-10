@@ -16,8 +16,8 @@ class GUI():
         self.bnb_in_account = []
         self.token_in_account = []
         self.trade:[Trade] = []
-        self.interaction = []
-        self.liquidity = []
+        self.interaction:[GetInteraction] = []
+        self.liquidity:[Monitoring]  = []
         #self.taxmonitor = []
         
         
@@ -55,12 +55,12 @@ class GUI():
         # Get the directory of the current script
         import sys, os
         if getattr(sys, 'frozen', False):
-            application_path = os.path.dirname(sys.executable)
+            application_path = sys._MEIPASS
         elif __file__:
-            application_path = os.path.dirname(__file__)
+            application_path = os.path.dirname(__file__) + '/../../../'
 
 
-        image_path = os.path.join(application_path, '../pancakecanvas.png')
+        image_path = os.path.join(application_path, 'pancakecanvas.png')
 
         self.logo_img = tkinter.PhotoImage(file=image_path)
         self.canvas.create_image(80.5, 84.5, image=self.logo_img)
@@ -542,9 +542,17 @@ class GUI():
 
     def catch_automatic_button(self):
         '''Using a thread for every single wallet, for all wallets be trigged at the same time'''
-        for wallets in range(0, len(self.interaction)):
-            GUI.mode_automatic.__defaults__ = (wallets,)
-            threading.Thread(target=self.mode_automatic).start()
+        if self.automatic_running == False:
+            self.automatic_running = True
+            self.automatic_TradeButton.config(text='Cancel', bg='#b40d0d', activebackground='#8B0000')
+            for wallets in range(0, len(self.interaction)):
+                GUI.mode_automatic.__defaults__ = (wallets,)
+                threading.Thread(target=self.mode_automatic).start()
+        else:
+            self.automatic_running = False
+            self.automatic_TradeButton.config(text='automatic', bg='#D9D9D9', activebackground='#ECECEC')
+            self.change_text('Waiting for Operation')
+
     def mode_automatic(self, wallet=0):
             '''Able to Buy finnaly, after we select Liquidity option and'''
             maxbuy_entry = self.mbamount_TradeEntry.get()
@@ -562,17 +570,13 @@ class GUI():
             except ValueError:
                 messagebox.showerror(title='Error: Automatic Mode', message="Automatic mode needs BNB and Profit entries\n\nPlease, check if you enter number and not letter or leave blank space in BNB or Profit.\n\n(Entries ex.: 0.01 / 0.1 / 1.0 / 1)\n \nVerifique se você preencheu número e não  letra ou deixou espaço em branco em BNB ou Profit")
             else:
-                #This if is to make sure that the process will stop or running when User wants. will change the button to Cancel.
-                #Elif conditional of this if, will change the button to Connected again and break the running.
+                #conditional to run or break.
                 if self.automatic_running == False:
-                    self.automatic_TradeButton.config(text='Cancel', bg='#b40d0d', activebackground='#8B0000')
                     self.change_text(f'Listening Transaction for {self.symbol}')
-                    self.automatic_running = True
-                    self.check_gwei(wallet)
-
                     while self.automatic_running:
                         if self.liquidity[wallet].statusreturn == True: #and self.taxmonitor[wallet].buytax < 30:
                             if self.maxbuyvar4.get() == 1 and maxbuy_entry != '':
+                                #Max buy is the quantity of Token!
                                 bnb_tospend = float(maxbuy_entry) * self.interaction[wallet].getTokenPrice()
                                 
                                 if bnb_tospend > old_bnb_tospend:
@@ -600,20 +604,16 @@ class GUI():
                                     self.automatic_TradeButton.config(text='automatic', bg='#D9D9D9', activebackground='#ECECEC')
                                     self.automatic_running = False
                 
-                elif self.automatic_running == True:
-                    self.automatic_running = False
-                    self.liquidity[wallet].breakwhile()
-                    self.change_text('')
-                    self.automatic_TradeButton.config(text='automatic', bg='#D9D9D9', activebackground='#ECECEC')
-
 
     def catch_buy_button(self):
         if self.buy_running == False:
+            self.buy_running = True
             for wallets in range(0, len(self.interaction)):
                 threading.Thread(target=self.mode_buy, args=(wallets,)).start()
 
         else:
             self.buy_running = False
+            
             self.buy_TradeButton.config(text='Buy', width=7, height=1, bg='#66CDAA', activebackground='#008080')
         
 
@@ -632,8 +632,7 @@ class GUI():
         except ValueError:
             pass
         finally:
-            #Elif conditional of this if, will change the button to Connected again and break the running.
-                self.buy_running = True
+            #conditional of this if, will change the button to Connected again and break the running.
                 try:
                     bnb_trade_entry = float(bnb_trade_entry)
                     price_entry = float(price_entry)
@@ -677,6 +676,7 @@ class GUI():
             
     def catch_sell_button(self):
         if self.sell_running == False:
+            self.sell_running = True
             for wallets in range(0, len(self.interaction)):
                 threading.Thread(target=self.mode_sell, args=(wallets,)).start()
         else:
@@ -685,7 +685,7 @@ class GUI():
 
     def mode_sell(self, wallet=0):
         '''WIll only SELL the token address that was connect with the wallet'''
-        self.sell_running = True
+        
         self.sell_TradeButton.config(text='Cancel', bg='#b40d0d', activebackground='#8B0000')
 
         price_entry = self.pricetrade_TradeEntry.get()
