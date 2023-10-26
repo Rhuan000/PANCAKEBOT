@@ -21,7 +21,7 @@ This bot was my first time Building a project with programming, try to interact 
 
 - Installing  External Libraries:<p>
   ```bash 
-  pip install asyncio web3 datetime os python-dotenv
+  pip install asyncio web3 datetime 
   ```
 
 
